@@ -166,6 +166,8 @@ if(DEFINED WITH_OTLP)
   )
 endif()
 
+option(WITH_METRICS "Build metrics" ON)
+
 option(WITH_OTLP_GRPC "Whether to include the OTLP gRPC exporter in the SDK"
        OFF)
 

@@ -24,6 +24,7 @@
 #  include "google/protobuf/stubs/strutil.h"
 #else
 #  include "google/protobuf/stubs/port.h"
+#  include <iostream>
 namespace google
 {
 namespace protobuf
@@ -463,7 +464,11 @@ static void ConvertGenericMessageToJson(nlohmann::json &value,
 
 bool SerializeToHttpBody(http_client::Body &output, const google::protobuf::Message &message)
 {
+#if GOOGLE_PROTOBUF_MIN_PROTOC_VERSION < 3012000
+  auto body_size = message.ByteSize();
+#else
   auto body_size = message.ByteSizeLong();
+#endif
   if (body_size > 0)
   {
     output.resize(body_size);

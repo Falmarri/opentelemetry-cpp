@@ -72,15 +72,19 @@ set(RESOURCE_PROTO
     "${PROTO_PATH}/opentelemetry/proto/resource/v1/resource.proto")
 set(TRACE_PROTO "${PROTO_PATH}/opentelemetry/proto/trace/v1/trace.proto")
 set(LOGS_PROTO "${PROTO_PATH}/opentelemetry/proto/logs/v1/logs.proto")
-set(METRICS_PROTO "${PROTO_PATH}/opentelemetry/proto/metrics/v1/metrics.proto")
+if(WITH_METRICS)
+  set(METRICS_PROTO "${PROTO_PATH}/opentelemetry/proto/metrics/v1/metrics.proto")
+endif()
 
 set(TRACE_SERVICE_PROTO
     "${PROTO_PATH}/opentelemetry/proto/collector/trace/v1/trace_service.proto")
 set(LOGS_SERVICE_PROTO
     "${PROTO_PATH}/opentelemetry/proto/collector/logs/v1/logs_service.proto")
-set(METRICS_SERVICE_PROTO
-    "${PROTO_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.proto"
-)
+if(WITH_METRICS)
+  set(METRICS_SERVICE_PROTO
+      "${PROTO_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.proto"
+  )
+endif()
 
 set(GENERATED_PROTOBUF_PATH
     "${CMAKE_BINARY_DIR}/generated/third_party/opentelemetry-proto")
@@ -103,11 +107,12 @@ set(LOGS_PB_CPP_FILE
     "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/logs/v1/logs.pb.cc")
 set(LOGS_PB_H_FILE
     "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/logs/v1/logs.pb.h")
-set(METRICS_PB_CPP_FILE
-    "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/metrics/v1/metrics.pb.cc")
-set(METRICS_PB_H_FILE
-    "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/metrics/v1/metrics.pb.h")
-
+if(WITH_METRICS)
+  set(METRICS_PB_CPP_FILE
+      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/metrics/v1/metrics.pb.cc")
+  set(METRICS_PB_H_FILE
+      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/metrics/v1/metrics.pb.h")
+endif()
 set(TRACE_SERVICE_PB_CPP_FILE
     "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/trace/v1/trace_service.pb.cc"
 )
@@ -136,19 +141,21 @@ if(WITH_OTLP_GRPC)
       "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/logs/v1/logs_service.grpc.pb.h"
   )
 endif()
-set(METRICS_SERVICE_PB_CPP_FILE
-    "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.pb.cc"
-)
-set(METRICS_SERVICE_PB_H_FILE
-    "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.pb.h"
-)
-if(WITH_OTLP_GRPC)
-  set(METRICS_SERVICE_GRPC_PB_CPP_FILE
-      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.grpc.pb.cc"
+if(WITH_METRICS)
+  set(METRICS_SERVICE_PB_CPP_FILE
+      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.pb.cc"
   )
-  set(METRICS_SERVICE_GRPC_PB_H_FILE
-      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.grpc.pb.h"
+  set(METRICS_SERVICE_PB_H_FILE
+      "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.pb.h"
   )
+  if(WITH_OTLP_GRPC)
+    set(METRICS_SERVICE_GRPC_PB_CPP_FILE
+        "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.grpc.pb.cc"
+    )
+    set(METRICS_SERVICE_GRPC_PB_H_FILE
+        "${GENERATED_PROTOBUF_PATH}/opentelemetry/proto/collector/metrics/v1/metrics_service.grpc.pb.h"
+    )
+  endif()
 endif()
 
 foreach(IMPORT_DIR ${PROTOBUF_IMPORT_DIRS})
@@ -168,6 +175,11 @@ if(WITH_OTLP_GRPC)
   endif()
   message(STATUS "gRPC_CPP_PLUGIN_EXECUTABLE=${gRPC_CPP_PLUGIN_EXECUTABLE}")
 endif()
+
+if(WITH_METRICS)
+  set(EXPERIMENTAL_ALLOW_PROTO3_OPTIONAL "--experimental_allow_proto3_optional")
+endif()
+
 
 if(WITH_OTLP_GRPC)
   add_custom_command(
@@ -194,7 +206,7 @@ if(WITH_OTLP_GRPC)
            ${METRICS_SERVICE_GRPC_PB_H_FILE}
            ${METRICS_SERVICE_GRPC_PB_CPP_FILE}
     COMMAND
-      ${PROTOBUF_PROTOC_EXECUTABLE} ARGS "--experimental_allow_proto3_optional"
+      ${PROTOBUF_PROTOC_EXECUTABLE} ARGS ${EXPERIMENTAL_ALLOW_PROTO3_OPTIONAL}
       "--proto_path=${PROTO_PATH}" ${PROTOBUF_INCLUDE_FLAGS}
       "--cpp_out=${GENERATED_PROTOBUF_PATH}"
       "--grpc_out=generate_mock_code=true:${GENERATED_PROTOBUF_PATH}"
@@ -220,7 +232,7 @@ else()
            ${METRICS_SERVICE_PB_H_FILE}
            ${METRICS_SERVICE_PB_CPP_FILE}
     COMMAND
-      ${PROTOBUF_PROTOC_EXECUTABLE} ARGS "--experimental_allow_proto3_optional"
+      ${PROTOBUF_PROTOC_EXECUTABLE} ARGS ${EXPERIMENTAL_ALLOW_PROTO3_OPTIONAL}
       "--proto_path=${PROTO_PATH}" ${PROTOBUF_INCLUDE_FLAGS}
       "--cpp_out=${GENERATED_PROTOBUF_PATH}" ${COMMON_PROTO} ${RESOURCE_PROTO}
       ${TRACE_PROTO} ${LOGS_PROTO} ${METRICS_PROTO} ${TRACE_SERVICE_PROTO}
